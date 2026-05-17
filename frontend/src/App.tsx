@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SignIn, SignUp } from '@clerk/react';
 import { ProductListPage } from './pages/ProductListPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { OrdersPage } from './pages/OrdersPage';
 
 const Home = () => (
   <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
@@ -17,6 +19,8 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/termekek" element={<ProductListPage />} />
         <Route path="/termekek/:id" element={<ProductDetailPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/rendeleseim" element={<OrdersPage />} />
         <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
         <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
       </Routes>
