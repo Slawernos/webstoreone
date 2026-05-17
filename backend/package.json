@@ -28,6 +28,7 @@
     "supertest": "^6.3.0"
   },
   "jest": {
-    "testMatch": ["**/tests/**/*.test.js"]
+    "testMatch": ["**/tests/**/*.test.js"],
+    "setupFiles": ["./tests/setup.js"]
   }
 }
