@@ -22,6 +22,9 @@ app.use(rateLimit({
   legacyHeaders: false,
 }));
 
+// ── Webhook (raw body – express.json() ELŐTT kell!) ──────
+app.use('/api/webhooks', require('./routes/webhook'));
+
 // ── Body parser ───────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -34,8 +37,7 @@ app.get('/api/health', (req, res) => {
 // ── Clerk auth middleware ─────────────────────────────────
 app.use(clerkMiddleware());
 
-// ── Routes (TODO: következő issue-kban) ──────────────────
-// app.use('/api/webhooks', require('./routes/webhook'));
+// ── Routes ────────────────────────────────────────────────
 // app.use('/api/products', require('./routes/products'));
 // app.use('/api/categories', require('./routes/categories'));
 // app.use('/api/cart', require('./routes/cart'));
