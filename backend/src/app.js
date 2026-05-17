@@ -22,17 +22,17 @@ app.use(rateLimit({
   legacyHeaders: false,
 }));
 
-// ── Clerk auth middleware ─────────────────────────────────
-app.use(clerkMiddleware());
-
 // ── Body parser ───────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ── Health check ─────────────────────────────────────────
+// ── Health check (auth előtt – nem igényel tokent) ────────
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ── Clerk auth middleware ─────────────────────────────────
+app.use(clerkMiddleware());
 
 // ── Routes (TODO: következő issue-kban) ──────────────────
 // app.use('/api/webhooks', require('./routes/webhook'));
