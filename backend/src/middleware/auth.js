@@ -1,12 +1,18 @@
-const { requireAuth, getAuth } = require('@clerk/express');
+const { requireAuth, getAuth, clerkMiddleware } = require('@clerk/express');
 
 /**
  * Védett route-okhoz: bejelentkezett felhasználó szükséges.
- * Clerk session token validálása, 401 ha nincs / lejárt.
+ * Ha nincs Clerk kulcs konfigurálva (pl. tesztben), azonnal 401.
  */
-const requireAuthMiddleware = requireAuth({
-  signInUrl: '/sign-in',
-});
+const requireAuthMiddleware = (req, res, next) => {
+  if (!process.env.CLERK_SECRET_KEY || !process.env.CLERK_PUBLISHABLE_KEY) {
+    return res.status(401).json({ error: 'Nem vagy bejelentkezve' });
+  }
+  return [clerkMiddleware(), requireAuth({ signInUrl: '/sign-in' })].reduce(
+    (chain, mw) => (r, s, n) => chain(r, s, (err) => (err ? n(err) : mw(r, s, n))),
+    (r, s, n) => n()
+  )(req, res, next);
+};
 
 /**
  * Opcionális auth: nem dob hibát ha nincs token,
@@ -18,9 +24,13 @@ const optionalAuth = (req, res, next) => {
 
 /**
  * Admin route-okhoz: bejelentkezett + admin role szükséges.
+ * requireAuthMiddleware UTÁN használandó.
  */
 const requireAdmin = async (req, res, next) => {
   try {
+    if (!process.env.CLERK_SECRET_KEY) {
+      return res.status(401).json({ error: 'Nem vagy bejelentkezve' });
+    }
     const { userId } = getAuth(req);
     if (!userId) {
       return res.status(401).json({ error: 'Nem vagy bejelentkezve' });

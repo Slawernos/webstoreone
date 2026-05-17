@@ -34,12 +34,9 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ── Clerk auth middleware ─────────────────────────────────
-app.use(clerkMiddleware());
-
 // ── Routes ────────────────────────────────────────────────
-// app.use('/api/products', require('./routes/products'));
-// app.use('/api/categories', require('./routes/categories'));
+app.use('/api/products', require('./routes/products'));
+app.use('/api/categories', require('./routes/categories'));
 // app.use('/api/cart', require('./routes/cart'));
 // app.use('/api/orders', require('./routes/orders'));
 // app.use('/api/admin', require('./routes/admin'));
