@@ -29,8 +29,17 @@ interface Order {
   status: string;
   total_price: string;
   shipping_address: string;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
+  phone?: string | null;
+  delivery_date?: string | null;
   items: OrderItem[];
+}
+
+function formatDateSafe(value?: string | null) {
+  if (!value) return 'Nincs megadva';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('hu-HU');
 }
 
 export function OrdersPage() {
@@ -101,7 +110,7 @@ export function OrdersPage() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
-                        {new Date(order.created_at).toLocaleDateString('hu-HU')} ·{' '}
+                        {formatDateSafe(order.createdAt ?? order.created_at)} ·{' '}
                         <span className="font-medium text-emerald-600">
                           {Number(order.total_price).toLocaleString('hu-HU')} Ft
                         </span>
@@ -114,6 +123,9 @@ export function OrdersPage() {
                     <div className="border-t px-6 pb-6 pt-4">
                       <p className="text-sm text-gray-600 mb-3">
                         <span className="font-medium">Szállítási cím:</span> {order.shipping_address}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-3">
+                        <span className="font-medium">Szállítási nap:</span> {formatDateSafe(order.delivery_date)}
                       </p>
                       <div className="space-y-2">
                         {order.items.map((item) => (

@@ -1,15 +1,57 @@
-﻿import { useParams, Link } from 'react-router-dom';
-import { ShoppingCart, Star, ArrowLeft } from 'lucide-react';
+﻿import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Star, ArrowLeft, Check } from 'lucide-react';
+import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useAuth, useClerk } from '@clerk/react';
 import { useProduct } from '../hooks/useProducts';
+import { useCart } from '../hooks/useCart';
 import { Header } from '../components/Header';
+import { Cart } from '../components/Cart';
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { product, loading, error } = useProduct(Number(id));
+  const { addToCart, itemCount, items, updateQuantity, removeItem } = useCart();
+  const { isSignedIn } = useAuth();
+  const clerk = useClerk();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const handleCheckout = () => {
+    if (!isSignedIn) {
+      setIsCartOpen(false);
+      clerk.openSignIn();
+      return;
+    }
+    setIsCartOpen(false);
+    navigate('/checkout');
+  };
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    if (!isSignedIn) {
+      clerk.openSignIn();
+      return;
+    }
+    setAdding(true);
+    setCartError(null);
+    try {
+      await addToCart(product.id, 1, product);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } catch (err) {
+      setCartError(err instanceof Error ? err.message : 'Hiba a kosárba adásnál');
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header cartCount={itemCount} onCartClick={() => setIsCartOpen(true)} />
 
       {loading && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-pulse">
@@ -72,10 +114,6 @@ export function ProductDetailPage() {
                   <span className="text-sm text-gray-600 ml-1">4.0</span>
                 </div>
 
-                {product.description && (
-                  <p className="mt-4 text-gray-600 leading-relaxed">{product.description}</p>
-                )}
-
                 <div className="mt-auto pt-8">
                   <div className="text-4xl font-bold text-emerald-600">
                     {Number(product.price).toLocaleString('hu-HU')} Ft
@@ -90,12 +128,25 @@ export function ProductDetailPage() {
                     )}
                   </div>
                   <button
-                    disabled={product.stock === 0}
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0 || adding}
                     className="mt-6 flex items-center justify-center gap-2 w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
-                    <ShoppingCart className="w-5 h-5" />
-                    {product.stock === 0 ? 'Elfogyott' : 'Kosarba'}
+                    {added ? (
+                      <><Check className="w-5 h-5" /> Hozzáadva!</>
+                    ) : adding ? (
+                      <><ShoppingCart className="w-5 h-5 animate-bounce" /> Kosárba teszem...</>
+                    ) : product.stock === 0 ? (
+                      'Elfogyott'
+                    ) : (
+                      <><ShoppingCart className="w-5 h-5" /> Kosárba</>
+                    )}
                   </button>
+                  {cartError && (
+                    <p className="mt-2 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 text-center">
+                      {cartError}
+                    </p>
+                  )}
                   <Link
                     to="/termekek"
                     className="mt-4 flex items-center justify-center gap-2 w-full py-3 text-sm text-gray-600 hover:text-emerald-600 transition-colors"
@@ -106,8 +157,33 @@ export function ProductDetailPage() {
               </div>
             </div>
           </div>
+
+          {product.description && (
+            <div className="mt-6 bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Termékleírás</h2>
+              <div className="prose prose-sm prose-emerald max-w-none
+                [&_strong]:text-gray-800 [&_strong]:font-semibold
+                [&_ul]:mt-2 [&_ul]:space-y-1 [&_li]:text-gray-600
+                [&_p]:mb-2 [&_p]:text-gray-600">
+                <ReactMarkdown>{product.description}</ReactMarkdown>
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      <Cart
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        items={items}
+        onUpdateQuantity={(productId, quantity) => {
+          void updateQuantity(productId, quantity);
+        }}
+        onRemoveItem={(productId) => {
+          void removeItem(productId);
+        }}
+        onCheckout={handleCheckout}
+      />
     </div>
   );
 }

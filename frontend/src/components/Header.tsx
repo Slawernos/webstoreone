@@ -1,6 +1,7 @@
-import { ShoppingCart, Search, Menu, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, LogIn } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useUser, UserButton, SignInButton } from '@clerk/react';
 
 interface HeaderProps {
   cartCount?: number;
@@ -11,10 +12,18 @@ interface HeaderProps {
 export function Header({ cartCount = 0, onCartClick, onSearchChange }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { user, isSignedIn } = useUser();
+  const isAdmin = user?.publicMetadata?.role === 'admin';
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    onSearchChange?.(e.target.value);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onSearchChange?.(searchQuery.trim());
+    }
   };
 
   return (
@@ -33,6 +42,16 @@ export function Header({ cartCount = 0, onCartClick, onSearchChange }: HeaderPro
               <Link to="/termekek" className="text-gray-700 hover:text-emerald-600 transition-colors">
                 Termékek
               </Link>
+              {isSignedIn && (
+                <Link to="/rendeleseim" className="text-gray-700 hover:text-emerald-600 transition-colors">
+                  Rendeléseim
+                </Link>
+              )}
+              {isAdmin && (
+                <Link to="/admin" className="text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors font-medium">
+                  Admin
+                </Link>
+              )}
             </nav>
           </div>
 
@@ -44,6 +63,7 @@ export function Header({ cartCount = 0, onCartClick, onSearchChange }: HeaderPro
                 placeholder="Keresés..."
                 value={searchQuery}
                 onChange={handleSearchChange}
+                onKeyDown={handleSearchKeyDown}
                 className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent w-64"
               />
             </div>
@@ -60,6 +80,16 @@ export function Header({ cartCount = 0, onCartClick, onSearchChange }: HeaderPro
                 </span>
               )}
             </button>
+
+            {isSignedIn ? (
+              <UserButton afterSignOutUrl="/termekek" />
+            ) : (
+              <SignInButton mode="modal">
+                <button className="hidden md:flex items-center gap-1 text-sm text-gray-600 hover:text-emerald-600 transition-colors">
+                  <LogIn className="w-4 h-4" /> Belépés
+                </button>
+              </SignInButton>
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -88,6 +118,34 @@ export function Header({ cartCount = 0, onCartClick, onSearchChange }: HeaderPro
               >
                 Termékek
               </Link>
+              {isSignedIn && (
+                <Link
+                  to="/rendeleseim"
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-50 rounded"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Rendeléseim
+                </Link>
+              )}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="px-4 py-2 text-emerald-700 hover:bg-emerald-50 rounded font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Admin
+                </Link>
+              )}
+              {!isSignedIn && (
+                <SignInButton mode="modal">
+                  <button
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded flex items-center gap-2 w-full text-left"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <LogIn className="w-4 h-4" /> Belépés
+                  </button>
+                </SignInButton>
+              )}
               <div className="px-4 py-2 sm:hidden relative">
                 <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -95,6 +153,7 @@ export function Header({ cartCount = 0, onCartClick, onSearchChange }: HeaderPro
                   placeholder="Keresés..."
                   value={searchQuery}
                   onChange={handleSearchChange}
+                  onKeyDown={handleSearchKeyDown}
                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>

@@ -25,6 +25,14 @@ const Order = sequelize.define('Order', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
+  delivery_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
 }, {
   tableName: 'orders',
   timestamps: true,

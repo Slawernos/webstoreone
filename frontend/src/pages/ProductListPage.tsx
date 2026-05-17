@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth, useClerk } from '@clerk/react';
 import { AnimatePresence } from 'motion/react';
 import { useProducts, useCategories } from '../hooks/useProducts';
+import { useCart } from '../hooks/useCart';
 import { ProductCard } from '../components/ProductCard';
 import { CategoryFilter } from '../components/CategoryFilter';
-import { Cart, type CartItem } from '../components/Cart';
+import { Cart } from '../components/Cart';
 import { Header } from '../components/Header';
 import type { Product } from '../types';
 
@@ -11,8 +14,22 @@ export function ProductListPage() {
   const [page, setPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const { isSignedIn } = useAuth();
+  const clerk = useClerk();
+  const { items, itemCount, addToCart, updateQuantity, removeItem } = useCart();
+
+  const handleCheckout = () => {
+    if (!isSignedIn) {
+      setIsCartOpen(false);
+      clerk.openSignIn();
+    } else {
+      setIsCartOpen(false);
+      navigate('/checkout');
+    }
+  };
 
   const { data, loading, error } = useProducts({
     page,
@@ -29,33 +46,17 @@ export function ProductListPage() {
   };
 
   const handleAddToCart = (product: Product) => {
-    setCartItems((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
-      return [...prev, { product, quantity: 1 }];
-    });
+    void addToCart(product.id, 1, product);
   };
 
   const handleUpdateQuantity = (productId: number, quantity: number) => {
-    if (quantity === 0) {
-      setCartItems((prev) => prev.filter((i) => i.product.id !== productId));
-    } else {
-      setCartItems((prev) =>
-        prev.map((i) => (i.product.id === productId ? { ...i, quantity } : i))
-      );
-    }
+    void updateQuantity(productId, quantity);
   };
-
-  const totalCartItems = cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
-        cartCount={totalCartItems}
+        cartCount={itemCount}
         onCartClick={() => setIsCartOpen(true)}
         onSearchChange={(q) => { setSearch(q); setPage(1); }}
       />
@@ -154,9 +155,12 @@ export function ProductListPage() {
       <Cart
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        items={cartItems}
+        items={items}
         onUpdateQuantity={handleUpdateQuantity}
-        onRemoveItem={(id) => setCartItems((prev) => prev.filter((i) => i.product.id !== id))}
+        onRemoveItem={(id) => {
+          void removeItem(id);
+        }}
+        onCheckout={handleCheckout}
       />
     </div>
   );

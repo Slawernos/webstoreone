@@ -60,6 +60,14 @@ router.post(
     body('shipping_address')
       .notEmpty()
       .withMessage('Szállítási cím megadása kötelező'),
+    body('phone')
+      .optional()
+      .matches(/^[+\d\s()-]{6,20}$/)
+      .withMessage('Érvénytelen telefonszám formátum'),
+    body('delivery_date')
+      .optional()
+      .isISO8601({ strict: false })
+      .withMessage('Érvénytelen dátum formátum'),
   ],
   async (req, res, next) => {
     const errors = validationResult(req);
@@ -101,6 +109,8 @@ router.post(
             status: 'pending',
             total_price: Number(total.toFixed(2)),
             shipping_address: req.body.shipping_address,
+            phone: req.body.phone || null,
+            delivery_date: req.body.delivery_date || null,
           },
           { transaction: t }
         );
