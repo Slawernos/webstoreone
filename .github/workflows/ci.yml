@@ -109,7 +109,7 @@ jobs:
         run: npm run dev -- --host &
         working-directory: frontend
         env:
-          VITE_CLERK_PUBLISHABLE_KEY: pk_test_placeholder
+          VITE_CLERK_PUBLISHABLE_KEY: pk_test_cm9idXN0LWRpbm9zYXVyLTkyLmNsZXJrLmFjY291bnRzLmRldiQ
 
       - name: Várakozás a szerverekre
         run: npx wait-on http://localhost:5000/api/health http://localhost:5173 --timeout 60000
