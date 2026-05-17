@@ -4,6 +4,7 @@ import { ProductListPage } from './pages/ProductListPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrdersPage } from './pages/OrdersPage';
+import { AdminPage } from './pages/AdminPage';
 
 const Home = () => (
   <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/termekek/:id" element={<ProductDetailPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/rendeleseim" element={<OrdersPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
         <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
       </Routes>
