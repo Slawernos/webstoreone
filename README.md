@@ -12,29 +12,44 @@ Modern kisállat webshop – Node.js + React + SQLite + Clerk auth.
 | Frontend | React, TypeScript, Vite, shadcn/ui, Tailwind CSS |
 | Auth | Clerk |
 | Tesztelés | Jest, Supertest, Cypress |
-| CI | GitHub Actions |
+| CI/CD | GitHub Actions |
+| Konténerizáció | Docker, docker-compose |
 
 ## Projekt struktúra
 
 ```
 webstoreone/
-├── backend/          # Express REST API
-│   ├── src/
-│   │   ├── models/   # Sequelize modellek
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   └── middleware/
-│   └── tests/        # Jest unit tesztek
-├── frontend/         # React + Vite app
+├── backend/
+│   ├── Dockerfile
 │   └── src/
-│       ├── components/
-│       ├── pages/
-│       └── context/
-├── cypress/          # E2E tesztek
+├── frontend/
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── src/
+├── docker-compose.yml      # éles
+├── docker-compose.dev.yml  # fejlesztői
+├── cypress/                # E2E tesztek
 └── .github/workflows/ci.yml
 ```
 
-## Fejlesztői indítás
+## Docker
+
+### Éles indítás
+```bash
+cp backend/.env.example backend/.env  # töltsd ki
+docker compose up -d
+# frontend: http://localhost
+# backend:  http://localhost:5000
+```
+
+### Fejlesztői mód (hot reload)
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# frontend: http://localhost:5173
+# backend:  http://localhost:5000
+```
+
+## Fejlesztői indítás (Docker nélkül)
 
 ### Backend
 ```bash

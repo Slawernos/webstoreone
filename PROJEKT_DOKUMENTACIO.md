@@ -1,6 +1,6 @@
 # Webshop Projekt – Dokumentáció
 
-**Technológiai stack:** Node.js + Express · React + **TypeScript** · SQLite + Sequelize ORM · Clerk (auth) · **shadcn/ui** + Tailwind CSS · Jest + Cypress
+**Technológiai stack:** Node.js + Express · React + **TypeScript** · SQLite + Sequelize ORM · Clerk (auth) · **shadcn/ui** + Tailwind CSS · Jest + Cypress · **Docker**
 
 ---
 
@@ -10,6 +10,7 @@
 | Komponens | Technológia | Indoklás |
 |-----------|-------------|----------|
 | Szerver | Node.js + Express | Könnyű, rugalmas REST API |
+| Konténerizáció | **Docker** + docker-compose | Hordozható, környezetfüggetlen futtatás |
 | Adatbázis | SQLite | Fájlalapú, telepítés nélküli, fejlesztéshez ideális |
 | ORM | **Sequelize** | Jól dokumentált, támogatja a migrációkat, könnyen átmigrálható PostgreSQL/MySQL-re élesbe |
 | Hitelesítés | **Clerk** | Teljes auth szolgáltatás (login, regisztráció, social login, session kezelés) |
@@ -292,9 +293,10 @@ A "reszponzív" egy frontend fogalom (mobilon is jól néz ki), ehhez Tailwind C
 | **2. Termékek** | CRUD végpontok, terméklista + detail frontend |
 | **3. Kosár & Rendelés** | Kosár logika, checkout folyamat |
 | **4. Admin panel** | Admin oldal, jogosultságkezelés |
-| **5. Tesztek** | Jest unit + integrációs tesztek |
-| **6. Csiszolás** | Reszponzív dizájn, hibaüzenetek, loading state-ek |
-| **7. Deploy** | Éles környezet beállítása |
+| **5. Tesztek** | Jest unit + Cypress E2E tesztek |
+| **6. Docker** | Dockerfile-ok, docker-compose, nginx konfig |
+| **7. Csiszolás** | Reszponzív dizájn, hibaüzenetek, loading state-ek |
+| **8. Deploy** | Éles környezet beállítása |
 
 ---
 
