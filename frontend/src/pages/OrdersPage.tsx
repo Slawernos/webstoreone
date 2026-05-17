@@ -4,9 +4,10 @@ import { useAuth } from '@clerk/react';
 import { Package, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
 import { Header } from '../components/Header';
+import { API_BASE_URL } from '../lib/apiBase';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: API_BASE_URL,
 });
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {

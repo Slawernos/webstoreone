@@ -3,9 +3,10 @@ import { useAuth } from '@clerk/react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Header } from '../components/Header';
+import { API_BASE_URL } from '../lib/apiBase';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: API_BASE_URL,
 });
 
 interface Stats {

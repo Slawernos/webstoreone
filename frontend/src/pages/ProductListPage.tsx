@@ -161,6 +161,7 @@ export function ProductListPage() {
           void removeItem(id);
         }}
         onCheckout={handleCheckout}
+        isSignedIn={isSignedIn ?? false}
       />
     </div>
   );

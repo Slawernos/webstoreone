@@ -32,10 +32,6 @@ export function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    if (!isSignedIn) {
-      clerk.openSignIn();
-      return;
-    }
     setAdding(true);
     setCartError(null);
     try {
@@ -183,6 +179,7 @@ export function ProductDetailPage() {
           void removeItem(productId);
         }}
         onCheckout={handleCheckout}
+        isSignedIn={isSignedIn ?? false}
       />
     </div>
   );

@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/react';
 import axios from 'axios';
 import type { Product } from '../types';
+import { API_BASE_URL } from '../lib/apiBase';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: API_BASE_URL,
 });
 
 const GUEST_CART_KEY = 'petshop_guest_cart_v1';

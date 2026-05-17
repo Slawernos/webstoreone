@@ -5,9 +5,10 @@ import { ShoppingBag, ArrowLeft, Calendar } from 'lucide-react';
 import axios from 'axios';
 import { Header } from '../components/Header';
 import { useCart } from '../hooks/useCart';
+import { API_BASE_URL } from '../lib/apiBase';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  baseURL: API_BASE_URL,
 });
 
 function addWorkdays(date: Date, days: number): Date {
