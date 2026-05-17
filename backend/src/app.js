@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const { clerkMiddleware } = require('@clerk/express');
+const { sequelize } = require('./models');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -58,8 +59,13 @@ app.use((err, req, res, next) => {
 
 // ── Szerver indítás ───────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Backend fut: http://localhost:${PORT}`);
+  sequelize.sync({ alter: false }).then(() => {
+    app.listen(PORT, () => {
+      console.log(`Backend fut: http://localhost:${PORT}`);
+    });
+  }).catch((err) => {
+    console.error('DB szinkronizáció sikertelen:', err);
+    process.exit(1);
   });
 }
 
