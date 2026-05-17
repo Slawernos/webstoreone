@@ -7,6 +7,8 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
 });
 
+const GUEST_CART_KEY = 'petshop_guest_cart_v1';
+
 export interface CartItem {
   id: number;
   user_id: number;
@@ -20,6 +22,48 @@ interface CartState {
   total: number;
   loading: boolean;
   error: string | null;
+}
+
+interface GuestCartStoredItem {
+  product: Product;
+  quantity: number;
+}
+
+function readGuestCart(): GuestCartStoredItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(GUEST_CART_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as GuestCartStoredItem[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeGuestCart(items: GuestCartStoredItem[]) {
+  if (typeof window === 'undefined') return;
+  if (items.length === 0) {
+    window.localStorage.removeItem(GUEST_CART_KEY);
+    return;
+  }
+  window.localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+}
+
+function toStateItems(guestItems: GuestCartStoredItem[]): CartItem[] {
+  return guestItems.map((item) => ({
+    id: -item.product.id,
+    user_id: 0,
+    product_id: item.product.id,
+    quantity: item.quantity,
+    product: item.product,
+  }));
+}
+
+function totalFromItems(items: CartItem[]) {
+  return Number(
+    items.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0).toFixed(2)
+  );
 }
 
 export function useCart() {
@@ -36,8 +80,21 @@ export function useCart() {
     return { Authorization: `Bearer ${token}` };
   }, [getToken]);
 
+  const setStateFromGuest = useCallback(() => {
+    const guestItems = toStateItems(readGuestCart());
+    setState({
+      items: guestItems,
+      total: totalFromItems(guestItems),
+      loading: false,
+      error: null,
+    });
+  }, []);
+
   const fetchCart = useCallback(async () => {
-    if (!isSignedIn) return;
+    if (!isSignedIn) {
+      setStateFromGuest();
+      return;
+    }
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
       const headers = await authHeaders();
@@ -46,44 +103,115 @@ export function useCart() {
     } catch {
       setState((s) => ({ ...s, loading: false, error: 'Kosár betöltési hiba' }));
     }
-  }, [isSignedIn, authHeaders]);
+  }, [isSignedIn, authHeaders, setStateFromGuest]);
 
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    if (!isSignedIn) {
+      setStateFromGuest();
+      return;
+    }
+
+    let cancelled = false;
+
+    const mergeGuestCart = async () => {
+      const guestItems = readGuestCart();
+      if (guestItems.length === 0) {
+        await fetchCart();
+        return;
+      }
+
+      setState((s) => ({ ...s, loading: true, error: null }));
+      try {
+        const headers = await authHeaders();
+        for (const item of guestItems) {
+          await api.post(
+            '/api/cart',
+            { product_id: item.product.id, quantity: item.quantity },
+            { headers }
+          );
+        }
+        writeGuestCart([]);
+        if (!cancelled) {
+          await fetchCart();
+        }
+      } catch {
+        if (!cancelled) {
+          setState((s) => ({ ...s, loading: false, error: 'Kosár szinkronizálási hiba' }));
+        }
+      }
+    };
+
+    mergeGuestCart();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn, authHeaders, fetchCart, setStateFromGuest]);
 
   const addToCart = useCallback(
-    async (productId: number, quantity = 1) => {
-      if (!isSignedIn) return;
+    async (productId: number, quantity = 1, product?: Product) => {
+      if (!isSignedIn) {
+        const guestItems = readGuestCart();
+        const existing = guestItems.find((item) => item.product.id === productId);
+        if (existing) {
+          existing.quantity += quantity;
+        } else {
+          const fallbackProduct = state.items.find((item) => item.product.id === productId)?.product;
+          const productToStore = product ?? fallbackProduct;
+          if (!productToStore) {
+            throw new Error('Termék nem található');
+          }
+          guestItems.push({ product: productToStore, quantity });
+        }
+        writeGuestCart(guestItems);
+        setStateFromGuest();
+        return;
+      }
+
       const headers = await authHeaders();
       await api.post('/api/cart', { product_id: productId, quantity }, { headers });
       await fetchCart();
     },
-    [isSignedIn, authHeaders, fetchCart]
+    [isSignedIn, authHeaders, fetchCart, setStateFromGuest, state.items]
   );
 
   const updateQuantity = useCallback(
-    async (itemId: number, quantity: number) => {
-      if (!isSignedIn) return;
+    async (productId: number, quantity: number) => {
+      if (!isSignedIn) {
+        const guestItems = readGuestCart();
+        const nextItems =
+          quantity === 0
+            ? guestItems.filter((item) => item.product.id !== productId)
+            : guestItems.map((item) =>
+                item.product.id === productId ? { ...item, quantity } : item
+              );
+        writeGuestCart(nextItems);
+        setStateFromGuest();
+        return;
+      }
+
+      const current = state.items.find((item) => item.product_id === productId);
+      if (!current) return;
       const headers = await authHeaders();
-      await api.put(`/api/cart/${itemId}`, { quantity }, { headers });
+      await api.put(`/api/cart/${current.id}`, { quantity }, { headers });
       await fetchCart();
     },
-    [isSignedIn, authHeaders, fetchCart]
+    [isSignedIn, authHeaders, fetchCart, setStateFromGuest, state.items]
   );
 
   const removeItem = useCallback(
-    async (itemId: number) => {
-      if (!isSignedIn) return;
-      const headers = await authHeaders();
-      await api.delete(`/api/cart/${itemId}`, { headers });
-      await fetchCart();
+    async (productId: number) => {
+      await updateQuantity(productId, 0);
     },
-    [isSignedIn, authHeaders, fetchCart]
+    [updateQuantity]
   );
 
   const clearCart = useCallback(async () => {
-    if (!isSignedIn) return;
+    if (!isSignedIn) {
+      writeGuestCart([]);
+      setState({ items: [], total: 0, loading: false, error: null });
+      return;
+    }
     const headers = await authHeaders();
     await api.delete('/api/cart', { headers });
     setState({ items: [], total: 0, loading: false, error: null });

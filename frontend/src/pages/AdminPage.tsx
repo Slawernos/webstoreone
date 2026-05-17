@@ -36,9 +36,17 @@ interface Order {
   status: string;
   total_price: string;
   shipping_address: string;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
+  delivery_date?: string | null;
   user?: { email: string; first_name: string; last_name: string };
   items: OrderItem[];
+}
+
+function formatDateSafe(value?: string | null) {
+  if (!value) return 'Nincs megadva';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('hu-HU');
 }
 
 const STATUS_OPTIONS = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
@@ -213,6 +221,7 @@ export function AdminPage() {
                   <th className="text-left px-4 py-3 font-semibold text-gray-600">#</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-600">Vásárló</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-600">Dátum</th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-600">Szállítás</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-600">Összeg</th>
                   <th className="text-center px-4 py-3 font-semibold text-gray-600">Státusz</th>
                 </tr>
@@ -225,7 +234,10 @@ export function AdminPage() {
                       {o.user ? `${o.user.first_name} ${o.user.last_name}`.trim() || o.user.email : '–'}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
-                      {new Date(o.created_at).toLocaleDateString('hu-HU')}
+                      {formatDateSafe(o.createdAt ?? o.created_at)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {formatDateSafe(o.delivery_date)}
                     </td>
                     <td className="px-4 py-3 text-right font-medium text-gray-900">
                       {Number(o.total_price).toLocaleString('hu-HU')} Ft

@@ -13,9 +13,10 @@ interface CartProps {
   items: CartItem[];
   onUpdateQuantity: (productId: number, quantity: number) => void;
   onRemoveItem: (productId: number) => void;
+  onCheckout?: () => void;
 }
 
-export function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem }: CartProps) {
+export function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) {
   const total = items.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
 
   return (
@@ -114,7 +115,10 @@ export function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem }:
                     {total.toLocaleString('hu-HU')} Ft
                   </span>
                 </div>
-                <button className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold">
+                <button
+                  onClick={onCheckout}
+                  className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold"
+                >
                   Megrendelés →
                 </button>
               </div>

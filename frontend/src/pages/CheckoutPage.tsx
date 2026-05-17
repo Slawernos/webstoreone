@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/react';
-import { ShoppingBag, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Calendar } from 'lucide-react';
 import axios from 'axios';
 import { Header } from '../components/Header';
 import { useCart } from '../hooks/useCart';
@@ -10,13 +10,49 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
 });
 
+function addWorkdays(date: Date, days: number): Date {
+  const result = new Date(date);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const dow = result.getDay();
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  return result;
+}
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+}
+
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
 export function CheckoutPage() {
   const { getToken } = useAuth();
   const { items, total, clearCart } = useCart();
   const navigate = useNavigate();
   const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const availableDates = useMemo(() => {
+    const today = new Date();
+    const earliest = addWorkdays(today, 3);
+    const twoWeeksLater = new Date(today);
+    twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+    const dates: Date[] = [];
+    const current = new Date(earliest);
+    while (current <= twoWeeksLater) {
+      const dow = current.getDay();
+      if (dow !== 0 && dow !== 6) dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +63,11 @@ export function CheckoutPage() {
       const token = await getToken();
       await api.post(
         '/api/orders',
-        { shipping_address: address },
+        {
+          shipping_address: address,
+          phone: phone.trim() || undefined,
+          delivery_date: deliveryDate || undefined,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await clearCart();
@@ -91,7 +131,7 @@ export function CheckoutPage() {
               </div>
             </div>
 
-            {/* Szállítási cím form */}
+            {/* Szállítási adatok form */}
             <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 flex flex-col gap-4">
               <h2 className="font-semibold text-gray-900">Szállítási adatok</h2>
 
@@ -107,6 +147,42 @@ export function CheckoutPage() {
                   placeholder="Város, utca, házszám, irányítószám"
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefonszám
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+36 30 123 4567"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Kért szállítási nap
+                  <span className="text-xs text-gray-400 font-normal ml-1">(10:00–18:00, munkanapokon)</span>
+                </label>
+                <select
+                  value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                >
+                  <option value="">Válassz napot...</option>
+                  {availableDates.map((d) => (
+                    <option key={isoDate(d)} value={isoDate(d)}>
+                      {formatDate(d)}
+                    </option>
+                  ))}
+                </select>
+                {availableDates.length === 0 && (
+                  <p className="text-xs text-gray-400 mt-1">Nincs elérhető szállítási nap a következő 2 hétben.</p>
+                )}
               </div>
 
               {error && (
