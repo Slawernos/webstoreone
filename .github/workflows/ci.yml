@@ -93,8 +93,11 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      - name: Backend data mappa létrehozása
+        run: mkdir -p backend/data
+
       - name: Backend indítása (háttérben)
-        run: npm start &
+        run: npm start > /tmp/backend.log 2>&1 &
         working-directory: backend
         env:
           NODE_ENV: development
@@ -110,6 +113,10 @@ jobs:
 
       - name: Várakozás a szerverekre
         run: npx wait-on http://localhost:5000/api/health http://localhost:5173 --timeout 60000
+
+      - name: Backend log (hiba esetén)
+        if: failure()
+        run: cat /tmp/backend.log || echo "Nincs backend log"
 
       - name: Cypress E2E tesztek
         uses: cypress-io/github-action@v6
