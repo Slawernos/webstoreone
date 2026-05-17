@@ -1,4 +1,6 @@
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'test') {
+  require('dotenv').config();
+}
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -37,7 +39,7 @@ app.get('/api/health', (req, res) => {
 // ── Routes ────────────────────────────────────────────────
 app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
-// app.use('/api/cart', require('./routes/cart'));
+app.use('/api/cart', require('./routes/cart'));
 // app.use('/api/orders', require('./routes/orders'));
 // app.use('/api/admin', require('./routes/admin'));
 
