@@ -82,7 +82,7 @@ export function Header({ cartCount = 0, onCartClick, onSearchChange }: HeaderPro
             </button>
 
             {isSignedIn ? (
-              <UserButton afterSignOutUrl="/termekek" />
+              <UserButton />
             ) : (
               <SignInButton mode="modal">
                 <button className="hidden md:flex items-center gap-1 text-sm text-gray-600 hover:text-emerald-600 transition-colors">

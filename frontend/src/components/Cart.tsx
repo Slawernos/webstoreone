@@ -1,4 +1,4 @@
-import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag, LogIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Product } from '../types';
 
@@ -14,9 +14,10 @@ interface CartProps {
   onUpdateQuantity: (productId: number, quantity: number) => void;
   onRemoveItem: (productId: number) => void;
   onCheckout?: () => void;
+  isSignedIn?: boolean;
 }
 
-export function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) {
+export function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout, isSignedIn }: CartProps) {
   const total = items.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
 
   return (
@@ -115,11 +116,17 @@ export function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, o
                     {total.toLocaleString('hu-HU')} Ft
                   </span>
                 </div>
+                {!isSignedIn && (
+                  <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                    <LogIn className="w-4 h-4 shrink-0" />
+                    <span>Rendeléshez be kell jelentkezni.</span>
+                  </div>
+                )}
                 <button
                   onClick={onCheckout}
                   className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold"
                 >
-                  Megrendelés →
+                  {isSignedIn ? 'Megrendelés →' : 'Bejelentkezés és rendelés →'}
                 </button>
               </div>
             )}
